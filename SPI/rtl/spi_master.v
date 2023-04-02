@@ -80,7 +80,7 @@ always @(*) begin
     else begin
         case (spi_state)
             STATE_RST || STATE_DISABLE : begin
-                if (!spi_cr1_in[CR1_SPE] )
+                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
                     next_state   =   STATE_DISABLE;
                 else  if  (new_tx_in || !last_finished)
                     next_state   =   STATE_TRANS;
@@ -90,7 +90,7 @@ always @(*) begin
             end
 
             STATE_WAIT:  begin
-                if (!spi_cr1_in[CR1_SPE] )
+                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
                     next_state   =   STATE_DISABLE;
                 else  if  (spi_cr1_in[CR1_SPISWAI] )
                     next_state   =   STATE_WAIT;
@@ -102,7 +102,7 @@ always @(*) begin
 
 
             STATE_IDLE: begin
-                if (!spi_cr1_in[CR1_SPE])
+                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
                     next_state       =   STATE_DISABLE;
                 else  if  (spi_cr1_in[CR1_SPISWAI] )
                     next_state   =   STATE_WAIT;
@@ -114,7 +114,7 @@ always @(*) begin
 
 
             STATE_TRANS: begin
-                if (!spi_cr1_in[CR1_SPE])
+                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
                     next_state       =  STATE_DISABLE;
                 else  if  (spi_cr1_in[CR1_SPISWAI] )
                     next_state   =   STATE_WAIT;
@@ -127,7 +127,7 @@ always @(*) begin
 
 
             STATE_FINISH:  begin
-                if (!spi_cr1_in[CR1_SPE])
+                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
                     next_state       =  STATE_DISABLE;
                 else  if  (spi_cr1_in[CR1_SPISWAI] )
                     next_state   =   STATE_WAIT;
