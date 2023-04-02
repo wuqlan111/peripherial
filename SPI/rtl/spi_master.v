@@ -18,17 +18,16 @@ module spi_master (
     /*-------ctrl regs--------*/
     input   bidiroe_in,
     input   errie_in,
-    output  modf_out,
-    output  ovrf_out,      
     input   spc0_in,
     input   [7: 0]  spi_cr1_in,
     input   spie_in,
-    output  spif_out,    
     input   [2: 0]  sppr,
     input   [2: 0]  spr,
-    output  sptef_out,
     input   sptie_in,
 
+    /*-------control signal----------*/
+    input   new_tx_in,
+    output  finished_out,
 
     /*------spi signal------*/
     input   miso_in,
@@ -51,16 +50,25 @@ localparam  CR1_SPISWAI     =    0;
 
 
 /*------------spi state-------------*/
-localparam   STATE_RST        =   3'd0;
-localparam   STATE_DISABLE    =   3'd1;
-localparam   STATE_WAIT       =   3'd2;
-localparam   STATE_TRANS      =   3'd3;
-localparam   STATE_FINISH     =   3'd4;
-
+localparam   STATE_RST           =   3'd0;
+localparam   STATE_DISABLE       =   3'd1;
+localparam   STATE_WAIT          =   3'd2;    
+localparam   STATE_IDLE          =   3'd3;
+localparam   STATE_TRANS         =   3'd4;
+localparam   STATE_FINISH        =   3'd5;
 
 
 reg  [2: 0]  spi_state;
 reg  [2: 0]  next_state;
+
+reg  [3: 0]  edge_counter;
+reg  start_trans;
+reg  end_trans;
+
+reg  last_finished;
+
+wire  mode_fault;
+
 
 
 
@@ -71,40 +79,62 @@ always @(*) begin
         next_state   =  STATE_RST;
     else begin
         case (spi_state)
-            STATE_RST: begin
-                
-
-
-
-            end
-
-
-            STATE_WAIT: begin
-                
-
-
-
+            STATE_RST || STATE_DISABLE : begin
+                if (!spi_cr1_in[CR1_SPE] )
+                    next_state   =   STATE_DISABLE;
+                else  if  (new_tx_in || !last_finished)
+                    next_state   =   STATE_TRANS;
+                else
+                    next_state   =   STATE_IDLE;
 
             end
 
+            STATE_WAIT:  begin
+                if (!spi_cr1_in[CR1_SPE] )
+                    next_state   =   STATE_DISABLE;
+                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                    next_state   =   STATE_WAIT;
+                else if ( last_finished )
+                    next_state   =   STATE_IDLE;
+                else
+                    next_state   =   STATE_TRANS;
+            end
+
+
+            STATE_IDLE: begin
+                if (!spi_cr1_in[CR1_SPE])
+                    next_state       =   STATE_DISABLE;
+                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                    next_state   =   STATE_WAIT;
+                else  if (new_tx_in)
+                    next_state       =   STATE_TRANS;
+                else
+                    next_state       =   STATE_IDLE;
+            end
 
 
             STATE_TRANS: begin
-                
-
-
-
+                if (!spi_cr1_in[CR1_SPE])
+                    next_state       =  STATE_DISABLE;
+                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                    next_state   =   STATE_WAIT;
+                else  if  ( edge_counter ==  15 )
+                    next_state   =   STATE_FINISH;
+                else
+                    next_state   =   STATE_TRANS;
 
             end
 
 
-
             STATE_FINISH:  begin
-                
-
-
-
-
+                if (!spi_cr1_in[CR1_SPE])
+                    next_state       =  STATE_DISABLE;
+                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                    next_state   =   STATE_WAIT;
+                else  if  ( new_tx_in )
+                    next_state   =   STATE_TRANS;
+                else
+                    next_state   =   STATE_IDLE;
 
             end
 
@@ -143,6 +173,10 @@ always @(posedge clk_in or negedge rstn_in) begin
 
     end
 end
+
+
+assign   mode_fault  =  (spi_cr1_in[CR1_MODFEN] && !spi_cr1_in[CR1_SSOE] && !ss_in)? 1:  0;
+
 
 
 endmodule
