@@ -1,9 +1,9 @@
 
 /****************************************************************************************
-* Module Name:     ahb_master_if
+* Module Name:     spi_core
 * Author:          wuqlan
 * Email:           
-* Date Created:    2022/12/28
+* Date Created:    2023/4/2
 * Description:     SPI core module.
 *                  
 *
