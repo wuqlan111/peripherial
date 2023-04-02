@@ -194,8 +194,6 @@ always @(posedge clk_in or negedge rstn_in) begin
                     ss_out            <=    0;
                     last_finished     <=    0;
                 end
-                else 
-                end
 
             end
 
