@@ -62,14 +62,15 @@ reg  [2: 0]  spi_state;
 reg  [2: 0]  next_state;
 
 reg  [3: 0]  edge_counter;
+reg  sck_temp;
 reg  start_trans;
 reg  end_trans;
 
 reg  last_finished;
 
 wire  mode_fault;
-
-
+wire  sck;
+wire  sck_enable;
 
 
 /*--------FSM-----------*/
@@ -189,12 +190,6 @@ always @(posedge clk_in or negedge rstn_in) begin
             end
 
             STATE_TRANS:  begin
-                if (edge_counter &&  last_finished ) begin
-                    edge_counter      <=    0;
-                    ss_out            <=    0;
-                    last_finished     <=    0;
-                end
-
             end
 
             STATE_FINISH:  begin
@@ -210,8 +205,49 @@ always @(posedge clk_in or negedge rstn_in) begin
 end
 
 
-assign   mode_fault  =  (spi_cr1_in[CR1_MODFEN] && !spi_cr1_in[CR1_SSOE] && !ss_in)? 1:  0;
 
+sck_generator   gen_sck(    .clk_in(clk_in),
+                            .enable_in(sck_enable),
+                            .rstn_in(rstn_in),
+                            .sck_out(sck_out),
+                            .sppr_in(sppr),
+                            .spr_in(spr)
+                        );
+
+
+
+always @(posedge sck or negedge  sck) begin
+
+    case (STATE_TRANS)
+        STATE_TRANS: begin
+            if (edge_counter && last_finished)begin
+                if ( ( spi_cr1_in[CR1_CPOL] && sck ) ||  ( !spi_cr1_in[CR1_CPOL] && !sck  )   )
+                    ss_out           <=    0;
+                else
+                    ss_out           <=    ss_out;
+                sck_temp             <=    spi_cr1_in[CR1_CPOL]?  1: 0;
+            end
+            else  begin
+                edge_counter        <=     (edge_counter  +  1);
+                ss_out              <=     0;
+                sck_temp            <=     sck;
+            end
+
+        end
+
+        default:  ss_out      <=   1;
+            
+    endcase
+
+    
+end
+
+
+
+
+assign   mode_fault  =  (spi_cr1_in[CR1_MODFEN] && !spi_cr1_in[CR1_SSOE] && !ss_in)? 1:  0;
+assign   sck_enable  =  ( spi_cr1_in[CR1_SPE] && spi_cr1_in[CR1_MTSR] && !spi_cr1_in[CR1_SPISWAI] ) ? 1:  0;
+assign   sck_out     =  (spi_state == STATE_TRANS) && !last_finished ? sck_temp: (spi_cr1_in[CR1_CPOL]?  1: 0);
 
 
 endmodule
