@@ -34,7 +34,7 @@ module spi_master (
     output  mosi_out,
     output  sck_out,
     input   ss_in,
-    output  ss_out
+    output  reg  ss_out
 );
 
 /*-------SPI_CR1 Filed------------*/
@@ -161,16 +161,49 @@ end
 /*-----------data control---------------*/
 always @(posedge clk_in or negedge rstn_in) begin
     if (!rstn_in) begin
+        edge_counter            <=    0;
+        end_trans               <=    0;
+        last_finished           <=    1;        
+        start_trans             <=    0;
+        ss_out                  <=    1;
         
     end
     else  begin
-        
+        case (spi_state)
+            STATE_RST || STATE_IDLE: begin
+                edge_counter            <=    0;
+                end_trans               <=    0;
+                last_finished           <=    1;
+                start_trans             <=    0;
+                ss_out                  <=    1;
+            end
 
 
+            STATE_DISABLE:  begin
+
+            end
+
+            STATE_WAIT:  begin
+                //sck_enable <=  0;
+
+            end
+
+            STATE_TRANS:  begin
+                if (start_trans) begin
+                    edge_counter      <=    0;
+                end
+
+            end
+
+            STATE_FINISH:  begin
+                last_finished          <=    1;
+            end
 
 
+            default:    ;
 
-
+        endcase
+                
     end
 end
 
