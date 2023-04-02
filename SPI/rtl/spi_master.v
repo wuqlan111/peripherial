@@ -189,8 +189,12 @@ always @(posedge clk_in or negedge rstn_in) begin
             end
 
             STATE_TRANS:  begin
-                if (start_trans) begin
+                if (edge_counter &&  last_finished ) begin
                     edge_counter      <=    0;
+                    ss_out            <=    0;
+                    last_finished     <=    0;
+                end
+                else 
                 end
 
             end
