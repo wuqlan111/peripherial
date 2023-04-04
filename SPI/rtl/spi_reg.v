@@ -39,7 +39,20 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     output  reg  [APB_DATA_WIDTH-1:0]  apb_rdata_out,
     output  reg  apb_ready_out,
     input   [APB_DATA_WIDTH-1:0]  apb_wdata_in,
-    input   apb_write_in
+    input   apb_write_in,
+
+    /*-------SPI register---------*/
+    output  reg   [7: 0]  spi_cr1_out,
+    output  reg   spie_out,
+    output  reg   sptie_out,
+    output  reg   errie_out,
+    output  reg   bidiroe_out,
+    output  reg   spc0_out,
+    output  reg  [2: 0]  sppr_out,
+    output  reg  [2: 0]  spr_out,
+    output  reg  spie_out,
+    output  reg   
+
 
 );
 
@@ -55,8 +68,8 @@ localparam  STATE_ERROR     =   3;
 reg  [3:0]  apb_state;
 reg  [3:0]  next_state;
 
-
-
+wire  addr_valid;
+wire  [7: 0]  addr_offset;
 
 
 //////////////////////////////////Combinatorial logic//////////////////////////////////////////
@@ -77,7 +90,7 @@ always @(*) begin
             end
 
             apb_state[STATE_SETUP]:begin
-                if ( !apb_penable_in || !apb_psel_in )
+                if ( !apb_penable_in || !apb_psel_in || !addr_valid)
                     next_state[STATE_ERROR]  =  1'd1;
                 else
                     next_state[STATE_TRANS]  =  1'd1;
@@ -177,8 +190,32 @@ end
 
 
 
+/*-----------SPI register offset-----*/
+localparam   SPI_CR1_OFFSET  =  0;
+localparam   SPI_CR2_OFFSET  =  4;
+localparam   SPI_SPR_OFFSET  =  8;
+localparam   SPI_SR_OFFSET   =  12;
+localparam   SPI_DR_OFFSET   =  16;
 
 
+
+
+always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
+    if (!apb_rstn_in) begin
+        
+
+    end
+
+
+
+
+
+    
+end
+
+
+assign   addr_valid   =  (apb_addr_in[APB_ADDR_WIDTH -1: 8] != SPI_REG_BASE[APB_ADDR_WIDTH-1: 8])? 0: 1;
+assign   addr_offset  =  apb_addr_in[7: 0];
 
 
 
