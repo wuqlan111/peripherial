@@ -19,25 +19,14 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
 
 
     /*-----------apb bus signal------------*/
-    input  [APB_ADDR_WIDTH -1: 0]  apb_addr_in,
-    input  apb_penable_in,
-
-    `ifdef  APB_PROT
-        input  [2:0]  apb_prot_in,
-    `endif
-
-    `ifdef  APB_WSTRB
-        input  [(APB_DATA_WIDTH / 8) -1:0]  apb_strb_in,
-    `endif
-
-    `ifdef  APB_SLVERR
-        input   apb_slverr_in,
-        output  apb_slverr_out,
-    `endif
-
+    input   [APB_ADDR_WIDTH -1: 0]  apb_addr_in,
+    input   apb_penable_in,
     input   apb_psel_in,
     output  reg  [APB_DATA_WIDTH-1:0]  apb_rdata_out,
     output  reg  apb_ready_out,
+    input   [(APB_DATA_WIDTH / 8) -1:0]  apb_strb_in,
+    input   apb_slverr_in,
+    output  reg  apb_slverr_out,
     input   [APB_DATA_WIDTH-1:0]  apb_wdata_in,
     input   apb_write_in,
 
@@ -50,9 +39,11 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     output  reg   spc0_out,
     output  reg  [2: 0]  sppr_out,
     output  reg  [2: 0]  spr_out,
-    output  reg  spie_out,
-    output  reg   
-
+    input   spif_in,
+    input   sptef_in,
+    input   modf_in,
+    input   ovrf_in,
+    output  reg  [7: 0] dr_out
 
 );
 
@@ -129,57 +120,25 @@ end
 /*Slave transfer data*/
 always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in) begin
-        
-        `ifdef  APB_SLVERR
-            apb_slverr_out    <=  0;
-        `endif
-        apb_rdata_out       <=  0;
-        apb_ready_out       <=  0;
-
+        apb_ready_out       <=  0;        
+        apb_slverr_out      <=  0;
     end
     else begin
         case (1'd1)
-            apb_state[STATE_RST]:begin
-
-                `ifdef  APB_SLVERR
-                    apb_slverr_out    <=  0;
-                `endif
+            apb_state[STATE_RST] || apb_state[STATE_SETUP]:begin
                 apb_rdata_out       <=  0;
-                apb_ready_out       <=  0;
-                
-            end
-
-            apb_state[STATE_SETUP]:begin
-                
-                `ifdef  APB_PROT
-                    other_prot_out      <=   apb_prot_in;
-                `endif
-                `ifdef  APB_WSTRB
-                    other_strb_out      <=   apb_strb_in;
-                `endif
-
-                apb_ready_out       <=   0;
-
+                apb_ready_out       <=  0;                
+                apb_slverr_out      <=  0;
             end
 
             apb_state[STATE_TRANS]: begin
-
-                `ifdef  APB_SLVERR
-                    apb_slverr_out      <=  apb_slverr_in;
-                    apb_rdata_out       <=  apb_slverr_in? 0: other_rdata_in;
-                `else
-
-                `endif
-
                 apb_ready_out       <=  1;
+                apb_slverr_out      <=  apb_slverr_in? 1: 0;
             end
 
             apb_state[STATE_ERROR]:begin
-                `ifdef  APB_SLVERR
-                    apb_slverr_out       <=  1;
-                `endif
-                apb_ready_out            <=  1;
-                
+                apb_ready_out        <=  1;                
+                apb_slverr_out       <=  1;  
             end
 
             default:;
@@ -202,7 +161,7 @@ localparam   SPI_DR_OFFSET   =  16;
 
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in) begin
-        
+        spi_cr1_out     <=  0;
 
     end
 
