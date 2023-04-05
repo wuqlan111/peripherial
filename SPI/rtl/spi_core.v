@@ -64,7 +64,6 @@ localparam   STATE_FINISH        =   3'd5;
 reg  [2: 0]  spi_state;
 reg  [2: 0]  next_state;
 
-reg  [3: 0]  edge_counter;
 reg  sck_temp;
 reg  start_trans;
 reg  end_trans;
@@ -77,6 +76,9 @@ wire  mode_fault;
 wire  sck;
 wire  sck_enable;
 wire  shift_sck;
+wire  trans_valid;
+wire  spi_stop;
+wire  spi_wait;
 
 /*--------FSM-----------*/
 always @(*) begin
@@ -86,7 +88,7 @@ always @(*) begin
     else begin
         case (spi_state)
             STATE_RST || STATE_DISABLE : begin
-                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
+                if (spi_stop)
                     next_state   =   STATE_DISABLE;
                 else  if  (new_tx_in || !last_finished)
                     next_state   =   STATE_TRANS;
@@ -96,9 +98,9 @@ always @(*) begin
             end
 
             STATE_WAIT:  begin
-                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
+                if (spi_stop)
                     next_state   =   STATE_DISABLE;
-                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                else  if  (spi_wait )
                     next_state   =   STATE_WAIT;
                 else if ( last_finished )
                     next_state   =   STATE_IDLE;
@@ -108,9 +110,9 @@ always @(*) begin
 
 
             STATE_IDLE: begin
-                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
+                if (spi_stop)
                     next_state       =   STATE_DISABLE;
-                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                else  if  (spi_wait)
                     next_state   =   STATE_WAIT;
                 else  if (new_tx_in)
                     next_state       =   STATE_TRANS;
@@ -120,11 +122,11 @@ always @(*) begin
 
 
             STATE_TRANS: begin
-                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
+                if (spi_stop)
                     next_state       =  STATE_DISABLE;
-                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                else  if  (spi_wait )
                     next_state   =   STATE_WAIT;
-                else  if  ( edge_counter ==  15 )
+                else  if  ( finished_out)
                     next_state   =   STATE_FINISH;
                 else
                     next_state   =   STATE_TRANS;
@@ -133,9 +135,9 @@ always @(*) begin
 
 
             STATE_FINISH:  begin
-                if (!spi_cr1_in[CR1_SPE] || !spi_cr1_in[CR1_MTSR])
-                    next_state       =  STATE_DISABLE;
-                else  if  (spi_cr1_in[CR1_SPISWAI] )
+                if (spi_stop)
+                    next_state   =  STATE_DISABLE;
+                else  if  (spi_wait)
                     next_state   =   STATE_WAIT;
                 else  if  ( new_tx_in )
                     next_state   =   STATE_TRANS;
@@ -167,7 +169,6 @@ end
 /*-----------data control---------------*/
 always @(posedge clk_in or negedge rstn_in) begin
     if (!rstn_in) begin
-        edge_counter            <=    0;
         end_trans               <=    0;
         last_finished           <=    1;        
         start_trans             <=    0;
@@ -177,21 +178,10 @@ always @(posedge clk_in or negedge rstn_in) begin
     else  begin
         case (spi_state)
             STATE_RST || STATE_IDLE: begin
-                edge_counter            <=    0;
                 end_trans               <=    0;
                 last_finished           <=    1;
                 start_trans             <=    0;
                 ss_out                  <=    1;
-            end
-
-
-            STATE_DISABLE:  begin
-
-            end
-
-            STATE_WAIT:  begin
-                //sck_enable <=  0;
-
             end
 
             STATE_TRANS:  begin
@@ -245,6 +235,11 @@ assign   sck_enable  =  ( spi_cr1_in[CR1_SPE] && spi_cr1_in[CR1_MTSR] && !spi_cr
 assign   sck_out     =  (spi_state == STATE_TRANS) && !last_finished ? sck_temp: (spi_cr1_in[CR1_CPOL]?  1: 0);
 
 assign   shift_sck  =  spi_cr1_in[CR1_MTSR] ? sck_out: sck_in ;
+
+assign   trans_valid  =  spi_cr1_in[CR1_MTSR]  ||  !ss_in ?  1:  0;
+
+assign   spi_stop     =  spi_cr1_in[CR1_MTSR]  &&  !spi_cr1_in[CR1_SPE] ? 1: 0;
+assign   spi_wait     =  spi_cr1_in[CR1_MTSR]  &&  !spi_cr1_in[CR1_SPISWAI] ? 1: 0;
 
 endmodule
 
