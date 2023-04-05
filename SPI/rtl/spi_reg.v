@@ -43,10 +43,9 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     output  reg   spc0_out,
     output  reg  [2: 0]  sppr_out,
     output  reg  [2: 0]  spr_out,
-    input   spif_in,
-    input   sptef_in,
+    input   shift_end_in,
     input   modf_in,
-    input   ovrf_in,
+    input   over_in,
     output  reg  [7: 0] dr_out
 
 );
@@ -55,13 +54,21 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
 
 /*FSM state definition*/
 localparam  STATE_RST       =   0;
-localparam  STATE_SETUP     =   1;
-localparam  STATE_TRANS     =   2;
-localparam  STATE_ERROR     =   3;
+localparam  STATE_IDLE      =   1;
+localparam  STATE_SETUP     =   2;
+localparam  STATE_TRANS     =   3;
+localparam  STATE_ERROR     =   4;
 
 
-reg  [3:0]  apb_state;
-reg  [3:0]  next_state;
+reg  [4:0]  apb_state;
+reg  [4:0]  next_state;
+
+
+reg  modf;
+reg  overf;
+reg  spif;
+reg  sptef;
+reg  read_sr;
 
 wire  addr_valid;
 wire  [7: 0]  addr_offset;
@@ -91,11 +98,13 @@ always @(*) begin
         next_state[STATE_RST]  =  1'd1;
     else begin
         case (1'd1)
-            apb_state[STATE_RST]:begin
-                    if (!apb_psel_in || apb_penable_in)
-                        next_state[STATE_RST]    =  1'd1;
+            apb_state[STATE_RST] || apb_state[STATE_IDLE] :begin
+                    if (!apb_psel_in)
+                        next_state[STATE_IDLE]    =  1'd1;
+                    else if ( !apb_penable_in )
+                        next_state[STATE_SETUP]   =  1'd1;
                     else
-                        next_state[STATE_SETUP]  =  1'd1;
+                        next_state[STATE_ERROR]   =  1'd1;
             end
 
             apb_state[STATE_SETUP]:begin
@@ -110,11 +119,12 @@ always @(*) begin
                 if ( !apb_penable_in || !apb_psel_in )
                     next_state[STATE_ERROR]  =  1'd1;
                 else
-                    next_state[STATE_RST]  =  1'd1;
+                    next_state[STATE_IDLE]  =  1'd1;
             end
+
             
             default:
-                next_state[STATE_RST]  =  1'd1;
+                next_state[STATE_IDLE]  =  1'd1;
 
         endcase
         
@@ -134,6 +144,10 @@ always @(negedge apb_clk_in) begin
     apb_state <= next_state;
 end
 
+        spif                <=  0;        
+        sptef               <=  1;
+        modf                <=  0;
+        overf               <=  0;
 
 /*Slave transfer data*/
 always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
@@ -146,6 +160,18 @@ always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             apb_state[STATE_RST] || apb_state[STATE_SETUP]:begin
                 apb_ready_out       <=  0;             
                 apb_slverr_out      <=  0;
+            end
+
+            apb_state[STATE_IDLE]: begin
+                apb_ready_out       <=  0;             
+                apb_slverr_out      <=  0;
+                
+                spif                <=  shift_end_in? 1:  0;
+                spif                <=  ste;
+                modf                <=  modf_in?  1: 0;
+                overf               <=  over_in? 1: 0;
+
+
             end
 
             apb_state[STATE_TRANS]: begin
@@ -178,6 +204,7 @@ localparam   MAX_REG_OFFSET  =  16;
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in  ||  apb_state[STATE_RST]) begin
         apb_rdata_out       <=  0;
+        dr_out              <=  0;
         spi_cr1_out         <=  (1<<4);
         spie_out            <=  0;
         sptie_out           <=  0;
@@ -186,13 +213,21 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         spc0_out            <=  0;
         sppr_out            <=  0;
         spr_out             <=  0;
-        dr_out              <=  0;
+
+        spif                <=  0;
+        sptef               <=  1;
+        modf                <=  0;
+        overf               <=  0;
     end
     else if (apb_state[STATE_TRANS]) begin
         if (is_cr1) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_cr1;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
             spi_cr1_out         <=  write_valid?  apb_wdata_in[7: 0]: spi_cr1_out;
+
+            modf                <=  !read_sr || !write_valid ? modf:  0;
+            read_sr             <=  0;
+
         end 
         else if (is_cr2) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_cr2;
@@ -214,11 +249,20 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         else if (is_sr) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_sr;
             apb_slverr_out      <=  apb_slverr_in || apb_write_in? 1: 0;
+
+            read_sr             <=  apb_write_in?  0:  1;
+            overf               <=  !apb_write_in? 0: overf;
+
         end
         else if(is_dr) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_dr;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-            dr_out              <=  write_valid?  apb_wdata_in[7: 0]: dr_out;
+            dr_out              <=  write_valid && sptef?  apb_wdata_in[7: 0]: dr_out;
+
+            spif                <=  !read_sr ||  apb_write_in? spif:  0;
+            sptef               <=  !read_sr ||  !write_valid? sptef: 0;
+            read_sr             <=  0;
+
         end
         else begin
             apb_rdata_out       <=  0;
@@ -243,9 +287,9 @@ assign   is_sr   =  (addr_offset  ==  SPI_SR_OFFSET )? 1: 0;
 assign   is_dr   =  (addr_offset  ==  SPI_DR_OFFSET )? 1: 0;
 
 assign  spi_cr1   =  spi_cr1_out;
-assign  spi_cr2   =  {spie_out, sptie_out, errie_out, 2'd0, bidiroe_out, spc0_out};
+assign  spi_cr2   =  {spie_out, sptie_out, errie_out, 3'd0, bidiroe_out, spc0_out};
 assign  spi_spr   =  {1'd0, sppr_out, 1'd0, spr_out };
-assign  spi_sr    =  {3'd0, spif_in,  sptef_in,  modf_in,  ovrf_in};
+assign  spi_sr    =  {4'd0, spif,  sptef,  modf,  overf};
 assign  spi_dr    =  dr_out;
 
 
