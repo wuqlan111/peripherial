@@ -1,6 +1,6 @@
 
 /****************************************************************************************
-* Module Name:     spi_master
+* Module Name:     spi_core
 * Author:          wuqlan
 * Email:           
 * Date Created:    2023/4/2
@@ -9,7 +9,7 @@
 *
 * Version:         0.1
 *****************************************************************************************/
-module spi_master (
+module spi_core (
 
     /*-------system clk and reset signal*/
     input  clk_in,
@@ -20,18 +20,21 @@ module spi_master (
     input   errie_in,
     input   spc0_in,
     input   [7: 0]  spi_cr1_in,
+    input   [7: 0]  spi_dr_in,
     input   spie_in,
     input   [2: 0]  sppr,
     input   [2: 0]  spr,
     input   sptie_in,
+    output  [7: 0]  shift_out,
 
     /*-------control signal----------*/
     input   new_tx_in,
     output  finished_out,
 
     /*------spi signal------*/
-    input   miso_in,
-    output  mosi_out,
+    input   serial_in,
+    output  serial_out,
+    input   sck_in,
     output  sck_out,
     input   ss_in,
     output  reg  ss_out
@@ -68,10 +71,12 @@ reg  end_trans;
 
 reg  last_finished;
 
+reg  shift_enable;
+
 wire  mode_fault;
 wire  sck;
 wire  sck_enable;
-
+wire  shift_sck;
 
 /*--------FSM-----------*/
 always @(*) begin
@@ -214,33 +219,23 @@ sck_generator   gen_sck(    .clk_in(clk_in),
                             .spr_in(spr)
                         );
 
+spi_shift   shift_reg(
+                            .cpol_in(spi_cr1_in[CR1_CPOL]),
+                            .cpha_in(spi_cr1_in[CR1_CPHA]),
+                            .enable_in(shift_enable),
+                            .finish_out(finished_out),
+                            .lsbfe_in(spi_cr1_in[CR1_LSBFE]),
+                            .rstn_in(rstn_in),
+                            .sck_in(shift_sck),
+                            .serial_out(serial_out),
+                            .serial_in(serial_in),
+                            .shift_out(shift_out),
 
+                            .spe_in(spi_cr1_in[CR1_SPE]),    
+                            .spi_dr_in(spi_dr_in)
 
-always @(posedge sck or negedge  sck) begin
+                        );
 
-    case (STATE_TRANS)
-        STATE_TRANS: begin
-            if (edge_counter && last_finished)begin
-                if ( ( spi_cr1_in[CR1_CPOL] && sck ) ||  ( !spi_cr1_in[CR1_CPOL] && !sck  )   )
-                    ss_out           <=    0;
-                else
-                    ss_out           <=    ss_out;
-                sck_temp             <=    spi_cr1_in[CR1_CPOL]?  1: 0;
-            end
-            else  begin
-                edge_counter        <=     (edge_counter  +  1);
-                ss_out              <=     0;
-                sck_temp            <=     sck;
-            end
-
-        end
-
-        default:  ss_out      <=   1;
-            
-    endcase
-
-    
-end
 
 
 
@@ -249,6 +244,7 @@ assign   mode_fault  =  (spi_cr1_in[CR1_MODFEN] && !spi_cr1_in[CR1_SSOE] && !ss_
 assign   sck_enable  =  ( spi_cr1_in[CR1_SPE] && spi_cr1_in[CR1_MTSR] && !spi_cr1_in[CR1_SPISWAI] ) ? 1:  0;
 assign   sck_out     =  (spi_state == STATE_TRANS) && !last_finished ? sck_temp: (spi_cr1_in[CR1_CPOL]?  1: 0);
 
+assign   shift_sck  =  spi_cr1_in[CR1_MTSR] ? sck_out: sck_in ;
 
 endmodule
 
