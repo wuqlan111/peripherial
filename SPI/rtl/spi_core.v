@@ -22,13 +22,12 @@ module spi_core (
     input   [7: 0]  spi_cr1_in,
     input   [7: 0]  spi_dr_in,
     input   spie_in,
-    input   [2: 0]  sppr,
-    input   [2: 0]  spr,
+    input   [2: 0]  sppr_in,
+    input   [2: 0]  spr_in,
     input   sptie_in,
     output  [7: 0]  shift_out,
 
     /*-------control signal----------*/
-    input   new_tx_in,
     output  finished_out,
 
     /*------spi signal------*/

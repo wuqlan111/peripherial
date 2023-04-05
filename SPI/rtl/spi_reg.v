@@ -11,7 +11,6 @@
 *****************************************************************************************/
 module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
                         parameter   APB_ADDR_WIDTH    =  32,
-                        parameter   TIMEOUT_CYCLE     =  6,
                         parameter   SPI_REG_BASE      =  32'ha0300000 )
 (
     input  apb_clk_in,
@@ -144,10 +143,6 @@ always @(negedge apb_clk_in) begin
     apb_state <= next_state;
 end
 
-        spif                <=  0;        
-        sptef               <=  1;
-        modf                <=  0;
-        overf               <=  0;
 
 /*Slave transfer data*/
 always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
@@ -167,7 +162,6 @@ always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
                 apb_slverr_out      <=  0;
                 
                 spif                <=  shift_end_in? 1:  0;
-                spif                <=  ste;
                 modf                <=  modf_in?  1: 0;
                 overf               <=  over_in? 1: 0;
 
