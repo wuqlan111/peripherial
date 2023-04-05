@@ -55,16 +55,15 @@ localparam  CR1_SPISWAI     =    0;
 /*------------spi state-------------*/
 localparam   STATE_RST           =   3'd0;
 localparam   STATE_DISABLE       =   3'd1;
-localparam   STATE_WAIT          =   3'd2;    
-localparam   STATE_IDLE          =   3'd3;
-localparam   STATE_TRANS         =   3'd4;
-localparam   STATE_FINISH        =   3'd5;
+localparam   STATE_WAIT          =   3'd2;
+localparam   STATE_TRANS         =   3'd3;
+localparam   STATE_FINISH        =   3'd4;
 
 
 reg  [2: 0]  spi_state;
 reg  [2: 0]  next_state;
 
-reg  sck_temp;
+
 reg  start_trans;
 reg  end_trans;
 
@@ -73,7 +72,7 @@ reg  last_finished;
 reg  shift_enable;
 
 wire  mode_fault;
-wire  sck;
+wire  sck_gernerate;
 wire  sck_enable;
 wire  shift_sck;
 wire  trans_valid;
@@ -87,39 +86,15 @@ always @(*) begin
         next_state   =  STATE_RST;
     else begin
         case (spi_state)
-            STATE_RST || STATE_DISABLE : begin
+            STATE_RST || STATE_DISABLE || STATE_WAIT : begin
                 if (spi_stop)
                     next_state   =   STATE_DISABLE;
-                else  if  (new_tx_in || !last_finished)
-                    next_state   =   STATE_TRANS;
-                else
-                    next_state   =   STATE_IDLE;
-
-            end
-
-            STATE_WAIT:  begin
-                if (spi_stop)
-                    next_state   =   STATE_DISABLE;
-                else  if  (spi_wait )
+                else  if  (spi_stop)
                     next_state   =   STATE_WAIT;
-                else if ( last_finished )
-                    next_state   =   STATE_IDLE;
                 else
                     next_state   =   STATE_TRANS;
+
             end
-
-
-            STATE_IDLE: begin
-                if (spi_stop)
-                    next_state       =   STATE_DISABLE;
-                else  if  (spi_wait)
-                    next_state   =   STATE_WAIT;
-                else  if (new_tx_in)
-                    next_state       =   STATE_TRANS;
-                else
-                    next_state       =   STATE_IDLE;
-            end
-
 
             STATE_TRANS: begin
                 if (spi_stop)
@@ -134,20 +109,9 @@ always @(*) begin
             end
 
 
-            STATE_FINISH:  begin
-                if (spi_stop)
-                    next_state   =  STATE_DISABLE;
-                else  if  (spi_wait)
-                    next_state   =   STATE_WAIT;
-                else  if  ( new_tx_in )
-                    next_state   =   STATE_TRANS;
-                else
-                    next_state   =   STATE_IDLE;
+            STATE_FINISH:  next_state   =  STATE_DISABLE;
 
-            end
-
-
-            default:  next_state  =  STATE_RST;
+            default:  next_state  =  STATE_DISABLE;
 
         endcase
 
@@ -170,25 +134,33 @@ end
 always @(posedge clk_in or negedge rstn_in) begin
     if (!rstn_in) begin
         end_trans               <=    0;
-        last_finished           <=    1;        
+        last_finished           <=    1;  
+        shift_enable            <=    0;      
         start_trans             <=    0;
         ss_out                  <=    1;
         
     end
     else  begin
         case (spi_state)
-            STATE_RST || STATE_IDLE: begin
+            STATE_RST: begin
                 end_trans               <=    0;
                 last_finished           <=    1;
+                shift_enable            <=    0;
                 start_trans             <=    0;
                 ss_out                  <=    1;
             end
 
             STATE_TRANS:  begin
+                if (!start_trans) begin
+                    shift_enable   <=  1;
+                    ss_out         <=  spi_cr1_in[CR1_MTSR]? 0: 1;
+                end
             end
 
             STATE_FINISH:  begin
                 last_finished          <=    1;
+                shift_enable           <=    0;
+                ss_out                 <=    1;
             end
 
 
@@ -204,7 +176,7 @@ end
 sck_generator   gen_sck(    .clk_in(clk_in),
                             .enable_in(sck_enable),
                             .rstn_in(rstn_in),
-                            .sck_out(sck_out),
+                            .sck_out(sck_gernerate),
                             .sppr_in(sppr),
                             .spr_in(spr)
                         );
@@ -232,9 +204,9 @@ spi_shift   shift_reg(
 
 assign   mode_fault  =  (spi_cr1_in[CR1_MODFEN] && !spi_cr1_in[CR1_SSOE] && !ss_in)? 1:  0;
 assign   sck_enable  =  ( spi_cr1_in[CR1_SPE] && spi_cr1_in[CR1_MTSR] && !spi_cr1_in[CR1_SPISWAI] ) ? 1:  0;
-assign   sck_out     =  (spi_state == STATE_TRANS) && !last_finished ? sck_temp: (spi_cr1_in[CR1_CPOL]?  1: 0);
+assign   sck_out     =  (spi_state == STATE_TRANS) && !last_finished ? sck_gernerate: (spi_cr1_in[CR1_CPOL]?  1: 0);
 
-assign   shift_sck  =  spi_cr1_in[CR1_MTSR] ? sck_out: sck_in ;
+assign   shift_sck  =  spi_cr1_in[CR1_MTSR] ? sck_gernerate: sck_in;
 
 assign   trans_valid  =  spi_cr1_in[CR1_MTSR]  ||  !ss_in ?  1:  0;
 
