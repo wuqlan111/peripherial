@@ -4,8 +4,8 @@
 * Module Name:     spi_reg
 * Author:          wuqlan
 * Email:           
-* Date Created:    2023/4/2
-* Description:     SPI register module.
+* Date Created:    2023/4/9
+* Description:     UART register module.
 *                  
 *
 * Version:         0.1
