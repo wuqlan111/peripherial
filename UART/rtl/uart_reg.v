@@ -34,19 +34,43 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     input   [APB_DATA_WIDTH-1:0]  apb_wdata_in,
     input   apb_write_in,
 
-    /*-------SPI register---------*/
-    output  reg   [7: 0]  spi_cr1_out,
-    output  reg   spie_out,
-    output  reg   sptie_out,
-    output  reg   errie_out,
-    output  reg   bidiroe_out,
-    output  reg   spc0_out,
-    output  reg  [2: 0]  sppr_out,
-    output  reg  [2: 0]  spr_out,
-    input   shift_end_in,
-    input   modf_in,
-    input   over_in,
-    output  reg  [7: 0] dr_out
+    /*-------UART register---------*/
+    input   [7: 0]  rbr_in,
+    output  [7: 0]  thr_out,
+
+    output  reg  edssi_out,
+    output  reg  elsi_out,
+    output  reg  etbei_out,
+    output  reg  erbi_out,
+    input  fifoed_in,
+    input  [2: 0]  intid_in,
+    input  ipend_in,
+
+    output  reg  [1:0]  rxfiftl_out,
+    output  reg  rxclr_out,
+    output  reg  txclr_out,
+    output  reg  fifoen_out,
+    output  reg  bc_reg,
+    output  reg  sp_out,
+    output  reg  eps_out,
+    output  reg  pen_out,
+    output  reg  stb_out,
+    output  reg  wls_out,
+
+    output  reg  afe_out,
+    output  reg  out2_out,
+    output  reg  out1_out,
+    output  reg  rts_out,
+
+    output  reg  [15:  0]  lmsr_out,
+
+    output  reg  [15: 0]  dlr_out,
+
+    output  reg  utrst_out,
+    output  reg  uerst_out,
+    output  reg  free_out,
+
+    output  reg  osm_out
 
 );
 
@@ -60,15 +84,25 @@ localparam  STATE_TRANS     =   3;
 localparam  STATE_ERROR     =   4;
 
 
+
+
+
+
+
 reg  [4:0]  apb_state;
 reg  [4:0]  next_state;
 
 
-reg  modf;
-reg  overf;
-reg  spif;
-reg  sptef;
-reg  read_sr;
+
+reg  revid1;
+reg  [7:0]  revid2;	
+
+
+
+
+
+
+
 
 wire  addr_valid;
 wire  [7: 0]  addr_offset;
