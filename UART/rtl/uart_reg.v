@@ -207,38 +207,6 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         apb_rdata_out       <=  0;
     end
     else if (apb_state[STATE_TRANS]) begin
-        if (is_cr1) begin
-            apb_rdata_out       <=  apb_write_in?  0:  spi_cr1;
-            apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-
-        end 
-        else if (is_cr2) begin
-            apb_rdata_out       <=  apb_write_in?  0:  spi_cr2;
-            apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-            
-        end
-        else if (is_spr) begin
-            apb_rdata_out       <=  apb_write_in?  0:  spi_spr;
-            apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-            
-
-        end
-        else if (is_sr) begin
-            apb_rdata_out       <=  apb_write_in?  0:  spi_sr;
-            apb_slverr_out      <=  apb_slverr_in || apb_write_in? 1: 0;
-
-
-        end
-        else if(is_dr) begin
-            apb_rdata_out       <=  apb_write_in?  0:  spi_dr;
-            apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-
-
-        end
-        else begin
-            apb_rdata_out       <=  0;
-            apb_slverr_out      <=  1;
-        end 
 
     end
     else   ;
@@ -249,14 +217,6 @@ end
 assign   addr_valid    =  (apb_addr_in[APB_ADDR_WIDTH -1: 8] != SPI_REG_BASE[APB_ADDR_WIDTH-1: 8])? 0: 1;
 assign   addr_offset   =  apb_addr_in[7: 0];
 assign   offset_valid  =  (addr_offset  >  MAX_REG_OFFSET )?0:  1;
-
-
-assign   is_cr1  =  (addr_offset  ==  SPI_CR1_OFFSET)? 1: 0;
-assign   is_cr2  =  (addr_offset  ==  SPI_CR2_OFFSET)? 1: 0;
-assign   is_spr  =  (addr_offset  ==  SPI_SPR_OFFSET)? 1: 0;
-assign   is_sr   =  (addr_offset  ==  SPI_SR_OFFSET )? 1: 0;
-assign   is_dr   =  (addr_offset  ==  SPI_DR_OFFSET )? 1: 0;
-
 
 
 
