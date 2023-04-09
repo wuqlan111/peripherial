@@ -84,43 +84,20 @@ localparam  STATE_TRANS     =   3;
 localparam  STATE_ERROR     =   4;
 
 
-
-
-
-
-
 reg  [4:0]  apb_state;
 reg  [4:0]  next_state;
 
 
-
-reg  revid1;
-reg  [7:0]  revid2;	
-
-
-
-
-
-
+reg  [31: 0]  revid1;
+reg  [7: 0]   revid2;
 
 
 wire  addr_valid;
 wire  [7: 0]  addr_offset;
 wire  offset_valid;
 
-wire  is_cr1;
-wire  is_cr2;
-wire  is_spr;
-wire  is_sr;
-wire  is_dr;
 
-wire  [7: 0]  spi_cr1;
-wire  [7: 0]  spi_cr2;
-wire  [7: 0]  spi_spr;
-wire  [7: 0]  spi_sr;
-wire  [7: 0]  spi_dr;
 
-wire  write_valid;
  
 //////////////////////////////////Combinatorial logic//////////////////////////////////////////
 
@@ -195,11 +172,6 @@ always @( posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             apb_state[STATE_IDLE]: begin
                 apb_ready_out       <=  0;             
                 apb_slverr_out      <=  0;
-                
-                spif                <=  shift_end_in? 1:  0;
-                modf                <=  modf_in?  1: 0;
-                overf               <=  over_in? 1: 0;
-
 
             end
 
@@ -233,64 +205,34 @@ localparam   MAX_REG_OFFSET  =  16;
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in  ||  apb_state[STATE_RST]) begin
         apb_rdata_out       <=  0;
-        dr_out              <=  0;
-        spi_cr1_out         <=  (1<<4);
-        spie_out            <=  0;
-        sptie_out           <=  0;
-        errie_out           <=  0;
-        bidiroe_out         <=  0;
-        spc0_out            <=  0;
-        sppr_out            <=  0;
-        spr_out             <=  0;
-
-        spif                <=  0;
-        sptef               <=  1;
-        modf                <=  0;
-        overf               <=  0;
     end
     else if (apb_state[STATE_TRANS]) begin
         if (is_cr1) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_cr1;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-            spi_cr1_out         <=  write_valid?  apb_wdata_in[7: 0]: spi_cr1_out;
-
-            modf                <=  !read_sr || !write_valid ? modf:  0;
-            read_sr             <=  0;
 
         end 
         else if (is_cr2) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_cr2;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
             
-            spie_out            <=  write_valid?  apb_wdata_in[7]: spie_out;
-            sptie_out           <=  write_valid?  apb_wdata_in[6]: sptie_out;
-            errie_out           <=  write_valid?  apb_wdata_in[5]: errie_out;
-            bidiroe_out         <=  write_valid?  apb_wdata_in[1]: bidiroe_out;
-            spc0_out            <=  write_valid?  apb_wdata_in[0]: spc0_out;
         end
         else if (is_spr) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_spr;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
             
-            sppr_out            <=  write_valid?  apb_wdata_in[6: 4]: sppr_out;
-            spr_out             <=  write_valid?  apb_wdata_in[2: 0]: spr_out;
+
         end
         else if (is_sr) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_sr;
             apb_slverr_out      <=  apb_slverr_in || apb_write_in? 1: 0;
 
-            read_sr             <=  apb_write_in?  0:  1;
-            overf               <=  !apb_write_in? 0: overf;
 
         end
         else if(is_dr) begin
             apb_rdata_out       <=  apb_write_in?  0:  spi_dr;
             apb_slverr_out      <=  apb_slverr_in || (apb_write_in && !write_valid)? 1: 0;
-            dr_out              <=  write_valid && sptef?  apb_wdata_in[7: 0]: dr_out;
 
-            spif                <=  !read_sr ||  apb_write_in? spif:  0;
-            sptef               <=  !read_sr ||  !write_valid? sptef: 0;
-            read_sr             <=  0;
 
         end
         else begin
@@ -315,11 +257,9 @@ assign   is_spr  =  (addr_offset  ==  SPI_SPR_OFFSET)? 1: 0;
 assign   is_sr   =  (addr_offset  ==  SPI_SR_OFFSET )? 1: 0;
 assign   is_dr   =  (addr_offset  ==  SPI_DR_OFFSET )? 1: 0;
 
-assign  spi_cr1   =  spi_cr1_out;
-assign  spi_cr2   =  {spie_out, sptie_out, errie_out, 3'd0, bidiroe_out, spc0_out};
-assign  spi_spr   =  {1'd0, sppr_out, 1'd0, spr_out };
-assign  spi_sr    =  {4'd0, spif,  sptef,  modf,  overf};
-assign  spi_dr    =  dr_out;
+
+
+
 
 
 `ifdef  APB_WSTRB
