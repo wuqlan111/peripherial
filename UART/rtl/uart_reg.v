@@ -254,7 +254,7 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         end
         else begin
             
-            
+
         end
 
     end
@@ -267,8 +267,16 @@ assign   addr_valid    =  (apb_addr_in[APB_ADDR_WIDTH -1: 8] != SPI_REG_BASE[APB
 assign   addr_offset   =  apb_addr_in[7: 0];
 assign   offset_valid  =  (addr_offset  >  MAX_REG_OFFSET )?0:  1;
 
-
-
+assign  is_dr     =   (apb_addr_in[7: 0]  ==  UART_DR_OFFET)? 1: 0;
+assign  is_ier    =   (apb_addr_in[7: 0]  ==  UART_IER_OFFET)? 1: 0;
+assign  is_flcr   =   (apb_addr_in[7: 0]  ==  UART_FLCR_OFFET)? 1: 0;
+assign  is_mcr    =   (apb_addr_in[7: 0]  ==  UART_MCR_OFFET)? 1: 0;
+assign  is_lmsr   =   (apb_addr_in[7: 0]  ==  UART_LMSR_OFFET)? 1: 0;
+assign  is_dlr    =   (apb_addr_in[7: 0]  ==  UART_DLR_OFFET)? 1: 0;
+assign  is_revd1  =   (apb_addr_in[7: 0]  ==  UART_REVD1_OFFET)? 1: 0;
+assign  is_revd2  =   (apb_addr_in[7: 0]  ==  UART_REVD2_OFFET)? 1: 0;
+assign  is_mgmt   =   (apb_addr_in[7: 0]  ==  UART_MGMT_OFFET)? 1: 0;
+assign  is_mdr    =   (apb_addr_in[7: 0]  ==  UART_MDR_OFFET)? 1: 0;
 
 
 `ifdef  APB_WSTRB
@@ -277,24 +285,14 @@ assign   offset_valid  =  (addr_offset  >  MAX_REG_OFFSET )?0:  1;
     assign   write_valid  =  apb_write_in? 1: 0;
 `endif
 
+
+
+
+
+
+
+
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
