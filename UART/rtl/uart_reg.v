@@ -59,16 +59,33 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     output  reg  wls_out,
 
     output  reg  afe_out,
+    output  reg  loop_out,
     output  reg  out2_out,
     output  reg  out1_out,
     output  reg  rts_out,
 
-    output  reg  [15:  0]  lmsr_out,
+    input  rxfifoe_in,
+    input  temt_in,
+    input  thre_in,
+    input  bi_in,
+    input  fe_in,
+    input  pe_in,
+    input  oe_in,
+    input  dr_in,
+    input  cd_in,
+    input  ri_in,
+    input  sr_in,
+    input  dsr_in,
+    input  cts_in,
+    input  dcd_in,
+    input  teri_in,
+    input  ddsr_in,
+    input  dcts_in,  
 
     output  reg  [15: 0]  dlr_out,
 
     output  reg  utrst_out,
-    output  reg  uerst_out,
+    output  reg  urrst_out,
     output  reg  free_out,
 
     output  reg  osm_out
@@ -253,31 +270,46 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             
         end
         else if (is_mcr) begin
-
+            apb_rdata_out    <=  apb_write_in? 0: {26'd0, afe_out, loop_out, out2_out, 
+                                    out1_out, rts_out, 1'd0};
+            afe_out    <=  write_valid? apb_wdata_in[5]: afe_out;
+            loop_out   <=  write_valid? apb_wdata_in[4]: loop_out;
+            out2_out   <=  write_valid? apb_wdata_in[3]: out2_out;
+            out1_out   <=  write_valid? apb_wdata_in[2]: out1_out;
+            rts_out    <=  write_valid? apb_wdata_in[1]: rts_out;
             
         end
         else if (is_lmsr) begin
+            apb_rdata_out    <=  apb_write_in? 0: {16'd0, rxfifoe_in, temt_in, thre_in,
+                                 bi_in, fe_in,  pe_in, oe_in, dr_in, cd_in, 
+                                 ri_in, dsr_in};
             
         end
         else if (is_dlr) begin
-            
+            apb_rdata_out     <=  apb_write_in? 0:  {16'd0,  dlr_out};
+            dlr_out           <=  write_valid? apb_wdata_in[15:  0]:  dlr_out;
         end
         else if (is_revd1) begin
-            
+            apb_rdata_out    <=   apb_write_in?  0:  32'h1102_0002;
         end
         else if (is_revd2) begin
-            
+            apb_rdata_out    <=   apb_write_in?  0:  {24'd0,  revid2};
         end
         else if (is_mgmt) begin
-            
+            apb_rdata_out    <=   apb_write_in?  0:  {17'd0,  utrst_out, urrst_out, 
+                                    12'd0, free_out};
+            utrst_out        <=   write_valid?  apb_wdata_in[14]:  utrst_out;
+            urrst_out        <=   write_valid?  apb_wdata_in[13]:  urrst_out;
+            free_out         <=   write_valid?  apb_wdata_in[0]:  free_out;
         end
         else if (is_mdr) begin
-            
+            apb_rdata_out    <=  apb_write_in?  0:  {31'd0,  osm_out};
+            osm_out          <=  apb_write_in?  apb_wdata_in[0]:  osm_out;
         end
-        else begin
-            
+        else  ;
 
-        end
+        apb_ready_out        <=  1;
+        apb_slverr_out       <=   apb_slverr_in?  1: 0;
 
     end
     else   ;
