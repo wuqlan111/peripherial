@@ -95,7 +95,7 @@ reg  [7: 0]   revid2;
 wire  addr_valid;
 wire  [7: 0]  addr_offset;
 wire  offset_valid;
-
+wire  write_valid;
 
 
  
@@ -227,6 +227,8 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             
         end
         else if (is_ier) begin
+            edssi_out  <=  write_valid? apb_wdata_in[11]: edssi_out;
+            elsi_out   <=  write_valid? apb_wdata_in[]
             
         end
         else if (is_flcr) begin
