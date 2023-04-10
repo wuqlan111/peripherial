@@ -47,10 +47,11 @@ module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
     input  ipend_in,
 
     output  reg  [1:0]  rxfiftl_out,
+    output  reg  dmamode1_out,
     output  reg  rxclr_out,
     output  reg  txclr_out,
     output  reg  fifoen_out,
-    output  reg  bc_reg,
+    output  reg  bc_out,
     output  reg  sp_out,
     output  reg  eps_out,
     output  reg  pen_out,
@@ -246,7 +247,20 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             erbi_out   <=  write_valid? apb_wdata_in[8]: erbi_out;
         end
         else if (is_flcr) begin
-            apb_rdata_out  <= {}
+            apb_rdata_out  <= apb_write_in? 0:  { 16'd0, rxfiftl_out, 2'd0, dmamode1_out, txclr_out, rxclr_out, fifoed_in,
+                                                    1'd0,  bc_out, sp_out, eps_out, pen_out, stb_out,wls_out };
+
+            rxfiftl_out   <=  write_valid? apb_wdata_in[15: 14]: rxfiftl_out;
+            dmamode1_out  <=  write_valid? apb_addr_in[11]: dmamode1_out;
+            txclr_out     <=  write_valid && apb_wdata_in[10]? 0:  txclr_out;
+            rxclr_out     <=  write_valid && apb_wdata_in[9]?  0:  rxfiftl_out;
+            fifoen_out    <=  write_valid? apb_wdata_in[8]:  fifoen_out;
+            bc_out        <=  write_valid? apb_wdata_in[6]:  bc_out;
+            sp_out        <=  write_valid? apb_wdata_in[5]:  sp_out;
+            eps_out       <=  write_valid? apb_wdata_in[4]:  eps_out;
+            pen_out       <=  write_valid? apb_wdata_in[3]:  pen_out;
+            stb_out       <=  write_valid? apb_wdata_in[2]:  stb_out;
+            wls_out       <=  write_valid? apb_wdata_in[1: 0]:  wls_out;
             
         end
         else if (is_mcr) begin
