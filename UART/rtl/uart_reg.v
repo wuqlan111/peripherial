@@ -193,12 +193,28 @@ end
 
 
 /*-----------SPI register offset-----*/
-localparam   SPI_CR1_OFFSET  =  0;
-localparam   SPI_CR2_OFFSET  =  4;
-localparam   SPI_SPR_OFFSET  =  8;
-localparam   SPI_SR_OFFSET   =  12;
-localparam   SPI_DR_OFFSET   =  16;
-localparam   MAX_REG_OFFSET  =  16;
+localparam   UART_DR_OFFET        =   0;
+localparam   UART_IER_OFFET       =   4;
+localparam   UART_FLCR_OFFET      =   8;
+localparam   UART_MCR_OFFET       =   12;
+localparam   UART_LMSR_OFFET      =   16;
+localparam   UART_DLR_OFFET       =   20;
+localparam   UART_REVD1_OFFET     =   24;
+localparam   UART_REVD2_OFFET     =   28;
+localparam   UART_MGMT_OFFET      =   32;
+localparam   UART_MDR_OFFET       =   36;
+localparam   MAX_REG_OFFSET       =   36;
+
+wire  is_dr;
+wire  is_ier;
+wire  is_flcr;
+wire  is_mcr;
+wire  is_lmsr;
+wire  is_dlr;
+wire  is_revd1;
+wire  is_revd2;
+wire  is_mgmt;
+wire  is_mdr;
 
 
 
@@ -207,6 +223,39 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         apb_rdata_out       <=  0;
     end
     else if (apb_state[STATE_TRANS]) begin
+        if (is_dr) begin
+            
+        end
+        else if (is_ier) begin
+            
+        end
+        else if (is_flcr) begin
+            
+        end
+        else  if (is_mcr) begin
+            
+        end if (is_lmsr) begin
+            
+        end
+        else if (is_dlr) begin
+            
+        end
+        else if (is_revd1) begin
+            
+        end
+        else if (is_revd2) begin
+            
+        end
+        else if (is_mgmt) begin
+            
+        end
+        else if (is_mdr) begin
+            
+        end
+        else begin
+            
+            
+        end
 
     end
     else   ;
