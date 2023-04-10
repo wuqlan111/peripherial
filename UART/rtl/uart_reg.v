@@ -216,6 +216,16 @@ wire  is_revd2;
 wire  is_mgmt;
 wire  is_mdr;
 
+wire  [31: 0]  dr_reg;
+wire  [31: 0]  ier_reg;
+wire  [31: 0]  flcr_reg;
+wire  [31: 0]  mcr_reg;
+wire  [31: 0]  lmsr_reg;
+wire  [31: 0]  dlr_reg;
+wire  [31: 0]  revid1_reg;
+wire  [31: 0]  revid2_reg;
+wire  [31: 0]  mgmt_reg;
+wire  [31: 0]  mdr_reg;
 
 
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
@@ -227,11 +237,16 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             
         end
         else if (is_ier) begin
+            apb_rdata_out  <=  apb_write_in?0: {20'd0, edssi_out, elsi_out, etbei_out, 
+                                erbi_out, fifoen_out, 2'd0, intid_in, ipend_in};
+
             edssi_out  <=  write_valid? apb_wdata_in[11]: edssi_out;
-            elsi_out   <=  write_valid? apb_wdata_in[]
-            
+            elsi_out   <=  write_valid? apb_wdata_in[10]: elsi_out;
+            etbei_out  <=  write_valid? apb_wdata_in[9]: etbei_out;
+            erbi_out   <=  write_valid? apb_wdata_in[8]: erbi_out;
         end
         else if (is_flcr) begin
+            apb_rdata_out  <= {}
             
         end
         else if (is_mcr) begin
