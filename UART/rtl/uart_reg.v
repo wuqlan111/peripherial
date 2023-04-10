@@ -217,17 +217,6 @@ wire  is_revd2;
 wire  is_mgmt;
 wire  is_mdr;
 
-wire  [31: 0]  dr_reg;
-wire  [31: 0]  ier_reg;
-wire  [31: 0]  flcr_reg;
-wire  [31: 0]  mcr_reg;
-wire  [31: 0]  lmsr_reg;
-wire  [31: 0]  dlr_reg;
-wire  [31: 0]  revid1_reg;
-wire  [31: 0]  revid2_reg;
-wire  [31: 0]  mgmt_reg;
-wire  [31: 0]  mdr_reg;
-
 
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in  ||  apb_state[STATE_RST]) begin
@@ -264,6 +253,7 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
             
         end
         else if (is_mcr) begin
+
             
         end
         else if (is_lmsr) begin
