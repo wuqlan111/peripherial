@@ -232,9 +232,10 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
         else if (is_flcr) begin
             
         end
-        else  if (is_mcr) begin
+        else if (is_mcr) begin
             
-        end if (is_lmsr) begin
+        end
+        else if (is_lmsr) begin
             
         end
         else if (is_dlr) begin
