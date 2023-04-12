@@ -1,9 +1,9 @@
 
 /********************************************************************
-* Module Name:     sck_generator
+* Module Name:     bclk_generator
 * Author:          wuqlan
 * Email:           
-* Date Created:    2023/4/2
+* Date Created:    2023/4/12
 * Description:     UART bclk generator module.
 *                  
 *
