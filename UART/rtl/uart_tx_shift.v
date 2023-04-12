@@ -1,12 +1,11 @@
 
 
-
 /********************************************************************
-* Module Name:     sck_generator
+* Module Name:     uart_tx_shift
 * Author:          wuqlan
 * Email:           
 * Date Created:    2023/4/2
-* Description:     SPI sck generator module.
+* Description:     UART tx shift module.
 *                  
 *
 * Version:         0.1
