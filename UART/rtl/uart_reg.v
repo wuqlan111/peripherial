@@ -234,6 +234,12 @@ wire  is_revd2;
 wire  is_mgmt;
 wire  is_mdr;
 
+reg  [7: 0]  rx_fifo[0: 15];
+reg  [7: 0]  tx_fifo[0: 15];
+reg  [3: 0]  rx_head;
+reg  [3: 0]  rx_tail;
+reg  [3: 0]  tx_head;
+reg  [3: 0]  tx_tail;
 
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in  ||  apb_state[STATE_RST]) begin
