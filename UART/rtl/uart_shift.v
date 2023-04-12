@@ -12,21 +12,20 @@
 * Version:         0.1
 ***********************************************************************/
 
-module   uart_shift (
+module   uart_tx_shift (
+    input  rstn_in,
 
-    input   cpol_in,
-    input   cpha_in,
+    input   bclk_in,
+    input   esp_in,
     input   enable_in,
-    output  finish_out,
-    input   lsbfe_in,
-    input   rstn_in,
-    input   sck_in,
+    output  reg  finish_out,
+    input   osm_sel_in,
+    input   pen_in,
     output  serial_out,
-    input   serial_in,
-    output  [7:  0]  shift_out,
-
-    input   spe_in,    
-    input   [7: 0]   spi_dr_in
+    input   sp_in,
+    input   stb_in,
+    input   [7: 0]  thr_in,
+    input   [1: 0]  wls_in
 );
     
 
@@ -52,17 +51,17 @@ always @(*) begin
     else begin
         case (cur_state)
             STATE_RST: begin
-                if (!spe_in || !enable_in)
+                if (!enable_in)
                     next_state  =  STATE_RST;
                 else
                     next_state  =  STATE_SHIFT;
             end
 
             STATE_SHIFT: begin
-                if (!spe_in || !enable_in )
+                if (!enable_in )
                     next_state  =  STATE_RST;
                 else  if  (finish_out)
-                    next_state  =  STATE_SHIFT;
+                    next_state  =  STATE_FINISH;
                 else
                     next_state  =  STATE_SHIFT;
             end
@@ -75,18 +74,18 @@ always @(*) begin
 
 end
 
-always @(posedge sck_in or negedge sck_in  or  negedge  rstn_in ) begin
+always @(posedge bclk_in or negedge bclk_in  or  negedge  rstn_in ) begin
     if (!rstn_in)
         cur_state  <=  STATE_RST;
     else
-        cur_state  <=  STATE_SHIFT;
+        cur_state  <=  next_state;
 end
 
 
-always @(posedge sck_in or negedge sck_in  or  negedge  rstn_in) begin
+always @(posedge bclk_in or negedge sck_in  or  negedge  rstn_in) begin
 
     if (!rstn_in) begin
-        shift_counter    <=  0;
+        shift_counter     <=  0;
         shift_bits        <=  0;
     end
     else  begin
@@ -128,12 +127,9 @@ end
 
 
 
-assign   serial_out =  shift_out[7];
-assign   serial_in  =  shift_out[0];
 
-assign   finish_out =  (shift_counter ==  8)? 1: 0;
+assign   finish_out =  (shift_counter ==  7)? 1: 0;
 
-assign   can_shift  =  (!cpha_in && ( cpol_in ^ sck_in )) || ((cpha_in && !(cpol_in ^ sck_in) )) ? 1: 0;
 
 
 endmodule
