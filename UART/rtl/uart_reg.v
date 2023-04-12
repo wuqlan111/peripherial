@@ -223,6 +223,17 @@ localparam   UART_MGMT_OFFET      =   32;
 localparam   UART_MDR_OFFET       =   36;
 localparam   MAX_REG_OFFSET       =   36;
 
+
+reg  [7: 0]  rx_fifo[0: 15];
+reg  [7: 0]  tx_fifo[0: 15];
+reg  [3: 0]  rx_head;
+reg  [3: 0]  rx_tail;
+reg  [3: 0]  tx_head;
+reg  [3: 0]  tx_tail;
+reg  rx_fifo_full;
+reg  tx_fifo_full;
+
+
 wire  is_dr;
 wire  is_ier;
 wire  is_flcr;
@@ -233,13 +244,11 @@ wire  is_revd1;
 wire  is_revd2;
 wire  is_mgmt;
 wire  is_mdr;
+wire  tx_fifo_empty;
+wire  rx_fifo_empty;
+wire  tx_fifo_one_empty;
+wire  rx_fifo_one_entry;
 
-reg  [7: 0]  rx_fifo[0: 15];
-reg  [7: 0]  tx_fifo[0: 15];
-reg  [3: 0]  rx_head;
-reg  [3: 0]  rx_tail;
-reg  [3: 0]  tx_head;
-reg  [3: 0]  tx_tail;
 
 always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     if (!apb_rstn_in  ||  apb_state[STATE_RST]) begin
@@ -247,6 +256,16 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
     end
     else if (apb_state[STATE_TRANS]) begin
         if (is_dr) begin
+            apb_rdata_out      <=  apb_write_in? 0: {16'd0, rx_fifo[rx_head], tx_fifo[tx_head]};
+            
+            if (fifoen_out) begin
+                tx_fifo[tx_tail]  <= write_valid && !tx_fifo_full? apb_wdata_in[7:0]: tx_fifo[tx_tail];
+                tx_tail           <= write_valid && !tx_fifo_full? (tx_tail+1): tx_tail;
+                tx_fifo_full      <= write_valid? (!tx_fifo_full && !tx_fifo_one_empty?0: 1 ): tx_fifo_full;
+            end
+            else  begin
+                tx_fifo[0]  <= write_valid && thre_in? apb_wdata_in[7: 0]: tx_fifo[0];
+            end
             
         end
         else if (is_ier) begin
@@ -346,11 +365,10 @@ assign  is_mdr    =   (apb_addr_in[7: 0]  ==  UART_MDR_OFFET)? 1: 0;
 `endif
 
 
-
-
-
-
-
+assign   rx_fifo_empty  =  !rx_fifo_full && (rx_head ==  rx_tail) ? 1:  0;
+assign   tx_fifo_empty  =  !tx_fifo_full && (tx_head ==  tx_head) ? 1:  0;
+assign   rx_fifo_one_entry  =  rx_head == (rx_tail + 1) ? 1:  0;
+assign   tx_fifo_one_entry  =  tx_head == (tx_tail + 1) ? 1:  0;
 
 endmodule
 
