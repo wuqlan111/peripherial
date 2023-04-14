@@ -39,8 +39,17 @@ reg  [1: 0]  next_state;
 reg  [3: 0]  shift_counter;
 reg  [7: 0]  shift_bits;
 
+reg  [4: 0]  cycle_counter;
+
 
 wire  can_shift;
+wire  data_parity;
+wire  even_parity;
+wire  odd_parity;
+wire  stop_w2;
+wire  stop_w1;
+wire  stop_w1_5;
+
 
 always @(*) begin
     next_state  =  0;
@@ -125,7 +134,12 @@ always @(posedge bclk_in or negedge sck_in  or  negedge  rstn_in) begin
 end
 
 
+assign  even_parity  =  
+assign  data_parity  =  ;
 
+assign   stop_w1    =  !stb_in ? 1:  0;
+assign   stop_w1_5  =  stb_in && !wls_in? 1: 0;
+assign   stop_w2    =  stb_in && wls_in? 1:  0;
 
 assign   finish_out =  (shift_counter ==  7)? 1: 0;
 
