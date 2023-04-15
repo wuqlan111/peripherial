@@ -124,6 +124,7 @@ always @(posedge bclk_in or negedge rstn_in) begin
         cycle_counter     <=  0;
         shift_bits        <=  0;              
         shift_counter     <=  1;
+        finish_out        <=  0;
     end
     else  begin
         case (cur_state)
@@ -131,6 +132,7 @@ always @(posedge bclk_in or negedge rstn_in) begin
                 cycle_counter     <=  0;
                 shift_bits        <=  0;
                 shift_counter     <=  0;
+                finish_out        <=  0;
             end
 
             STATE_START: begin
@@ -167,6 +169,7 @@ always @(posedge bclk_in or negedge rstn_in) begin
             end
 
             STATE_FINISH: begin
+                finish_out     <=  1;
                 cycle_counter  <=  trans_next? 0: (cycle_counter+1);
                 shift_bits[0]  <=  1;
             end
