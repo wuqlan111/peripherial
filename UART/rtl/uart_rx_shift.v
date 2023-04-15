@@ -20,11 +20,10 @@ module   uart_tx_shift (
     output  reg  finish_out,
     input   osm_sel_in,
     input   pen_in,
-    output  serial_out,
+    input   serial_in,
     input   sp_in,
     input   stb_in,
-    input   [2: 0]  word_width_in,
-    input   [7: 0]  thr_in,
+    output  [7: 0]  shift_out,
     input   [1: 0]  wls_in
 );
     
