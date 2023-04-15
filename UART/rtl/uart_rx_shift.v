@@ -15,6 +15,7 @@ module   uart_tx_shift (
     input  rstn_in,
 
     input   bclk_in,
+    output  reg  data_parity_out,
     input   esp_in,
     input   enable_in,
     output  reg  finish_out,
