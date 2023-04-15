@@ -39,13 +39,16 @@ reg  [1: 0]  cur_state;
 reg  [1: 0]  next_state;
 
 reg  [3: 0]  shift_counter;
-reg  [7: 0]  shift_bits;
+reg  [8: 0]  shift_bits;
 
 reg  [4: 0]  cycle_counter;
 
 
 wire  can_shift;
-wire  data_parity;
+wire  data_5_parity;
+wire  data_6_parity;
+wire  data_7_parity;
+wire  data_8_parity;
 wire  data_width_valid;
 wire  even_5_parity;
 wire  even_6_parity;
@@ -115,41 +118,57 @@ always @(posedge bclk_in or negedge bclk_in  or  negedge  rstn_in ) begin
 end
 
 
-always @(posedge bclk_in or negedge sck_in  or  negedge  rstn_in) begin
+always @(posedge bclk_in or negedge rstn_in) begin
 
     if (!rstn_in) begin
-        shift_counter     <=  0;
-        shift_bits        <=  0;
+        cycle_counter     <=  0;
+        shift_bits        <=  0;              
+        shift_counter     <=  1;
     end
     else  begin
         case (cur_state)
             STATE_RST: begin
-                shift_bits[0]     <=  spe_in? (lsbfe_in?  spi_dr_in[7]: spi_dr_in[0]) : 0;
-                shift_bits[1]     <=  spe_in? (lsbfe_in?  spi_dr_in[6]: spi_dr_in[1]) : 0;
-                shift_bits[2]     <=  spe_in? (lsbfe_in?  spi_dr_in[5]: spi_dr_in[2]) : 0;
-                shift_bits[3]     <=  spe_in? (lsbfe_in?  spi_dr_in[4]: spi_dr_in[3]) : 0;
-                shift_bits[4]     <=  spe_in? (lsbfe_in?  spi_dr_in[3]: spi_dr_in[4]) : 0;
-                shift_bits[5]     <=  spe_in? (lsbfe_in?  spi_dr_in[2]: spi_dr_in[5]) : 0;
-                shift_bits[6]     <=  spe_in? (lsbfe_in?  spi_dr_in[1]: spi_dr_in[6]) : 0;
-                shift_bits[7]     <=  spe_in? (lsbfe_in?  spi_dr_in[0]: spi_dr_in[7]) : 0;
-
+                cycle_counter     <=  0;
+                shift_bits        <=  0;
                 shift_counter     <=  0;
             end
 
+            STATE_START: begin
+                shift_bits        <=  0;
+                cycle_counter     <=  (shift_counter+1);
+            end
+
             STATE_SHIFT: begin
-                if (can_shift && shift_counter) begin
-                    shift_bits[7]      <=    shift_bits[6];
-                    shift_bits[6]      <=    shift_bits[5];
-                    shift_bits[4]      <=    shift_bits[3];
-                    shift_bits[3]      <=    shift_bits[2];
-                    shift_bits[2]      <=    shift_bits[1];
-                    shift_bits[1]      <=    shift_bits[0];
-                    shift_bits[0]      <=    serial_in;
+                cycle_counter  <=  trans_next? 0: (cycle_counter+1);
+                if (!shift_counter && trans_next) begin
+                    shift_bits[0]    <= thr_in[0];
+                    shift_bits[1]    <= thr_in[0];
+                    shift_bits[2]    <= thr_in[0];
+                    shift_bits[3]    <= thr_in[0];
+                    shift_bits[4]    <= thr_in[0];
+                    shift_bits[5]    <=  pen_in && is_data_5? data_5_parity: thr_in[5];
+                    shift_bits[6]    <=  pen_in && is_data_5? data_6_parity: thr_in[6];
+                    shift_bits[7]    <=  pen_in && is_data_5? data_7_parity: thr_in[7];
+                    shift_bits[8]    <=  pen_in && is_data_5? data_8_parity: thr_in[8];
                 end
-                else ;
+                else if (shift_counter && trans_next) begin
+                    shift_counter    <= (shift_counter + 1);
+                    shift_bits[0]    <= shift_bits[1];
+                    shift_bits[1]    <= shift_bits[2];
+                    shift_bits[2]    <= shift_bits[3];
+                    shift_bits[3]    <= shift_bits[4];
+                    shift_bits[4]    <= shift_bits[5];
+                    shift_bits[6]    <= shift_bits[7];
+                    shift_bits[7]    <= shift_bits[8];
+                    shift_bits[8]    <= 0;
+                    shift_counter    <= shift_counter + 1;
+                end
+                else  ;
+            end
 
-                shift_counter      <=    can_shift? (shift_counter + 1): shift_counter;
-
+            STATE_FINISH: begin
+                cycle_counter  <=  trans_next? 0: (cycle_counter+1);
+                shift_bits[0]  <=  1;
             end
 
             default :   ; 
@@ -158,6 +177,11 @@ always @(posedge bclk_in or negedge sck_in  or  negedge  rstn_in) begin
     end
 end
 
+
+assign   data_5_parity = (sp_in && !esp_in) || (!sp_in && (esp_in ^ even_5_parity)) ? 1:  0;
+assign   data_6_parity = (sp_in && !esp_in) || (!sp_in && (esp_in ^ even_6_parity)) ? 1:  0;
+assign   data_7_parity = (sp_in && !esp_in) || (!sp_in && (esp_in ^ even_7_parity)) ? 1:  0;
+assign   data_8_parity = (sp_in && !esp_in) || (!sp_in && (esp_in ^ even_8_parity)) ? 1:  0;
 
 assign  even_5_parity  =  thr_in[0] ^ thr_in[1] ^ thr_in[2] ^ thr_in[3] ^ thr_in[4] ? 1:  0;
 assign  even_6_parity  =  even_5_parity ^ thr_in[6] ?1: 0;
@@ -174,11 +198,17 @@ assign  is_data_8 = (!stb_in && (word_width_in == 7)) || (stb_in && (wls_in == 3
 
 
 
-assign   stop_w1    =  !stb_in ? 1:  0;
-assign   stop_w1_5  =  stb_in && !wls_in? 1: 0;
-assign   stop_w2    =  stb_in && wls_in? 1:  0;
+assign   stop_w1     =  !stb_in ? 1:  0;
+assign   stop_w1_5   =  stb_in && !wls_in? 1: 0;
+assign   stop_w2     =  stb_in && wls_in? 1:  0;
 
-assign   finish_out =  (shift_counter ==  7)? 1: 0;
+assign   finish_out  =  (shift_counter ==  7)? 1: 0;
+
+assign   serial_out  =  shift_bits[0];
+
+assign   trans_next  =  (osm_sel_in && (cycle_counter == 13)) || ( !osm_sel_in && (cycle_counter == 16) )? 1:  0;
+assign   shift_end   =  (is_data_5 && (shift_counter == 4)) || (is_data_6 && (shift_counter == 5))
+                             || (is_data_7 && (shift_counter == 6)) || (is_data_8 && (shift_counter == 7) )? 1:  0;
 
 
 
