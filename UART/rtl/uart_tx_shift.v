@@ -23,6 +23,7 @@ module   uart_tx_shift (
     output  serial_out,
     input   sp_in,
     input   stb_in,
+    input   [2: 0]  word_width_in,
     input   [7: 0]  thr_in,
     input   [1: 0]  wls_in
 );
@@ -30,8 +31,9 @@ module   uart_tx_shift (
 
 
 localparam   STATE_RST     =   2'd0;
-localparam   STATE_SHIFT   =   2'd1;
-localparam   STATE_FINISH  =   2'd2;
+localparam   STATE_START   =   2'd1;
+localparam   STATE_SHIFT   =   2'd2;
+localparam   STATE_FINISH  =   2'd3;
 
 reg  [1: 0]  cur_state;
 reg  [1: 0]  next_state;
@@ -44,11 +46,23 @@ reg  [4: 0]  cycle_counter;
 
 wire  can_shift;
 wire  data_parity;
-wire  even_parity;
+wire  data_width_valid;
+wire  even_5_parity;
+wire  even_6_parity;
+wire  even_7_parity;
+wire  even_8_parity;
 wire  odd_parity;
 wire  stop_w2;
 wire  stop_w1;
 wire  stop_w1_5;
+
+wire  trans_next;
+wire  shift_end;
+
+wire  is_data_5;
+wire  is_data_6;
+wire  is_data_7;
+wire  is_data_8;
 
 
 always @(*) begin
@@ -59,16 +73,27 @@ always @(*) begin
     else begin
         case (cur_state)
             STATE_RST: begin
-                if (!enable_in)
+                if (!enable_in || !data_width_valid)
                     next_state  =  STATE_RST;
                 else
-                    next_state  =  STATE_SHIFT;
+                    next_state  =  STATE_START;
             end
+
+            STATE_START: begin
+
+                if (!enable_in || !data_width_valid)
+                    next_state  =  STATE_RST;
+                else if (trans_next)
+                    next_state  =  STATE_START;
+                else
+                    next_state  =  STATE_START;
+            end
+
 
             STATE_SHIFT: begin
                 if (!enable_in )
                     next_state  =  STATE_RST;
-                else  if  (finish_out)
+                else  if  (shift_end && trans_next)
                     next_state  =  STATE_FINISH;
                 else
                     next_state  =  STATE_SHIFT;
@@ -134,8 +159,20 @@ always @(posedge bclk_in or negedge sck_in  or  negedge  rstn_in) begin
 end
 
 
-assign  even_parity  =  
-assign  data_parity  =  ;
+assign  even_5_parity  =  thr_in[0] ^ thr_in[1] ^ thr_in[2] ^ thr_in[3] ^ thr_in[4] ? 1:  0;
+assign  even_6_parity  =  even_5_parity ^ thr_in[6] ?1: 0;
+assign  even_7_parity  =  even_6_parity ^ thr_in[6] ?1: 0;
+assign  even_8_parity  =  even_7_parity ^ thr_in[6] ?1: 0;
+
+
+assign   data_width_valid  =  !is_data_5 && !is_data_6 && !is_data_7 && !is_data_8? 0:  1;
+
+assign  is_data_5 = (!stb_in && (word_width_in == 4)) || (stb_in && !wls_in) ? 1:  0;
+assign  is_data_6 = (!stb_in && (word_width_in == 5)) || (stb_in && (wls_in == 1) ) ? 1:  0;
+assign  is_data_7 = (!stb_in && (word_width_in == 6)) || (stb_in && (wls_in == 2) ) ? 1:  0;
+assign  is_data_8 = (!stb_in && (word_width_in == 7)) || (stb_in && (wls_in == 3) ) ? 1:  0;
+
+
 
 assign   stop_w1    =  !stb_in ? 1:  0;
 assign   stop_w1_5  =  stb_in && !wls_in? 1: 0;
