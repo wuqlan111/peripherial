@@ -1,11 +1,11 @@
 
 
 /********************************************************************
-* Module Name:     uart_tx_shift
+* Module Name:     uart_rx_shift
 * Author:          wuqlan
 * Email:           
-* Date Created:    2023/4/2
-* Description:     UART tx shift module.
+* Date Created:    2023/4/15
+* Description:     UART rx shift module.
 *                  
 *
 * Version:         0.1
