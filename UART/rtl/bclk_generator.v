@@ -12,7 +12,6 @@
 
 module  sck_generator(
     input   clk_in,
-    input   enable_in,
     input   rstn_in,
     output  reg  bclk_out,
     input   [15: 0]  divisor
@@ -36,9 +35,9 @@ always @(clk_in or rstn_in) begin
         top_half       <=    1;
     end
     else begin
-        counter       <=     enable_in?  (counter + 1):  0;
-        bclk_out      <=     enable_in && change_clk ? ~bclk_out:  bclk_out;
-        top_half      <=     enable_in && change_clk ? ~top_half:  top_half;
+        counter       <=     (counter + 1);
+        bclk_out      <=     change_clk ? ~bclk_out:  bclk_out;
+        top_half      <=     change_clk ? ~top_half:  top_half;
     end
 end
 
