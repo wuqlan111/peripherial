@@ -342,7 +342,7 @@ always @(posedge  apb_clk_in  or  negedge  apb_rstn_in ) begin
 end
 
 
-assign   addr_valid    =  (apb_addr_in[APB_ADDR_WIDTH -1: 8] != SPI_REG_BASE[APB_ADDR_WIDTH-1: 8])? 0: 1;
+assign   addr_valid    =  (apb_addr_in[APB_ADDR_WIDTH -1: 8] != UART_REG_BASE[APB_ADDR_WIDTH-1: 8])? 0: 1;
 assign   addr_offset   =  apb_addr_in[7: 0];
 assign   offset_valid  =  (addr_offset  >  MAX_REG_OFFSET )?0:  1;
 

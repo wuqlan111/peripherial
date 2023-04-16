@@ -11,7 +11,7 @@
 * Version:         0.1
 ***********************************************************************/
 
-module   uart_tx_shift (
+module   uart_rx_shift (
     input  rstn_in,
 
     input   bclk_in,

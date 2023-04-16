@@ -48,7 +48,8 @@ module   uart_top #(    parameter   APB_DATA_WIDTH    =  32,
 
 wire  bclk_gen;
 
-
+wire  tx_finish;
+wire  rx_finish;
 
 
 /*--------uart regs----------*/
@@ -100,7 +101,7 @@ wire  [7: 0]  revid2;
 wire  mgmt_utrst;
 wire  mgmt_urrst;
 wire  mgmt_free;
-wire  mcr_osm_sel;
+wire  mdr_osm_sel;
 
 
 sck_generator  bclk_generator(
@@ -188,8 +189,45 @@ uart_reg #( .APB_DATA_WIDTH(APB_DATA_WIDTH), .APB_ADDR_WIDTH(APB_ADDR_WIDTH),
     .urrst_out(mgmt_urrst),
     .free_out(mgmt_free),
 
-    .osm_out(mcr_osm_sel)
+    .osm_out(mdr_osm_sel)
 
+);
+
+
+uart_rx_shift rx_module(
+    .rstn_in(apb_rstn_in),
+
+    .bclk_in(bclk_gen),
+    .data_parity_out(),
+    .esp_in(flcr_eps),
+    .enable_in(),
+    .finish_out(rx_finish),
+    .osm_sel_in(mdr_osm_sel),
+    .pen_in(flcr_pen),
+    .serial_in(uart_rxd_in),
+    .sp_in(flcr_sp),
+    .stb_in(flcr_stb),
+    .shift_out(),
+    .wls_in(flcr_wls)
+);
+
+
+
+uart_tx_shift tx_module(
+    .rstn_in(apb_rstn_in),
+
+    .bclk_in(bclk_gen),
+    .esp_in(flcr_eps),
+    .enable_in(),
+    .finish_out(tx_finish),
+    .osm_sel_in(mdr_osm_sel),
+    .pen_in(flcr_pen),
+    .serial_out(uart_txd_out),
+    .sp_in(flcr_sp),
+    .stb_in(flcr_stb),
+    .word_width_in(),
+    .thr_in(dr_thr),
+    .wls_in(flcr_wls)
 );
 
 
