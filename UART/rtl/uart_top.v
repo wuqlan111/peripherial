@@ -38,7 +38,7 @@ module   uart_top #(    parameter   APB_DATA_WIDTH    =  32,
                 `endif
 
                 input   apb_slverr_in,
-                output  reg  apb_slverr_out,
+                output  apb_slverr_out,
                 input   [APB_DATA_WIDTH-1:0]  apb_wdata_in,
                 input   apb_write_in
 
@@ -52,6 +52,13 @@ reg  sck_enable;
 
 
 wire  bclk_gen;
+
+
+
+
+
+
+
 
 wire  [15:0]  dlr;
 
@@ -81,13 +88,13 @@ uart_reg #( .APB_DATA_WIDTH(APB_DATA_WIDTH), .APB_ADDR_WIDTH(APB_ADDR_WIDTH),
     .apb_ready_out(apb_ready_out),
 
     `ifdef  APB_WSTRB
-        input   [(APB_DATA_WIDTH / 8) -1:0]  apb_strb_in,
+        .apb_strb_in(apb_strb_in),
     `endif
 
-    input   apb_slverr_in,
-    output  reg  apb_slverr_out,
-    input   [APB_DATA_WIDTH-1:0]  apb_wdata_in,
-    input   apb_write_in,
+    .apb_slverr_in(apb_slverr_in),
+    .apb_slverr_out(apb_slverr_out),
+    .apb_wdata_in(apb_wdata_in),
+    .apb_write_in(apb_write_in),
 
     /*-------UART register---------*/
     input   [7: 0]  rbr_in,
