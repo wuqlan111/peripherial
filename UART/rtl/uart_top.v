@@ -10,17 +10,17 @@
 *
 * Version:         0.1
 *****************************************************************************************/
-module   spi_top #(     parameter   APB_DATA_WIDTH    =  32,
+module   uart_top #(     parameter   APB_DATA_WIDTH    =  32,
                         parameter   APB_ADDR_WIDTH    =  32,
                         parameter   TIMEOUT_CYCLE     =  6,
-                        parameter   SPI_REG_BASE      =  32'ha0300000 )
+                        parameter   UART_REG_BASE      =  32'ha0300000 )
 (
 
                 /*--------spi module top signal-------*/
-                inout  miso_io,
-                inout  mosi_io,
-                inout  sck_io,
-                inout  ss_io,
+                output  uart_txd_out,
+                input   uart_rxd_in,
+                input   uart_ctx_in,
+                output  uart_rts_out,
 
 
                 input  apb_clk_in,
@@ -46,45 +46,6 @@ module   spi_top #(     parameter   APB_DATA_WIDTH    =  32,
 
 
 
-/*-------SPI_CR1 Filed------------*/
-localparam  CR1_SPE         =    7;
-localparam  CR1_MTSR        =    6;
-localparam  CR1_CPOL        =    5;
-localparam  CR1_CPHA        =    4;
-localparam  CR1_SSOE        =    3;
-localparam  CR1_LSBFE       =    2;
-localparam  CR1_MODFEN      =    1;
-localparam  CR1_SPISWAI     =    0;
-
-
-
-
-wire  serial_in;
-wire  serial_out;
-
-/*------connect core and registers--------*/
-wire  [7: 0]  spi_cr1;
-wire  spi_spie;
-wire  spi_sptie;
-wire  spi_errie;
-wire  spi_bidiroe;
-wire  spi_spc0;
-wire  [2: 0]  spi_sppr;
-wire  [2: 0]  spi_spr;
-wire  spi_spif;
-wire  spi_sptef;
-wire  spi_modf;
-wire  spi_overf;
-wire  [7: 0]  spi_dr;
-
-wire  sck_out;
-wire  sck_in;
-
-wire  ss_in;
-wire  ss_out;
-
-wire  [7: 0]  shift_reg;
-wire  shift_finish;
 
 
 
@@ -98,7 +59,6 @@ wire  shift_finish;
 
 
 
-
-
+endmodule
 
 
