@@ -1,7 +1,7 @@
 
 
 /****************************************************************************************
-* Module Name:     spi_reg
+* Module Name:     uart_reg
 * Author:          wuqlan
 * Email:           
 * Date Created:    2023/4/9
@@ -10,9 +10,9 @@
 *
 * Version:         0.1
 *****************************************************************************************/
-module   spi_reg #(     parameter   APB_DATA_WIDTH    =  32,
+module   uart_reg #(    parameter   APB_DATA_WIDTH    =  32,
                         parameter   APB_ADDR_WIDTH    =  32,
-                        parameter   SPI_REG_BASE      =  32'ha0300000 )
+                        parameter   UART_REG_BASE      =  32'ha0300000 )
 (
     input  apb_clk_in,
     input  apb_rstn_in,
