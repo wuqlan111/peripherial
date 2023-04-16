@@ -57,7 +57,7 @@ wire [7: 0] dr_thr;
 wire  ier_edssi;
 wire  ier_elsi;
 wire  ier_etbei;
-wire  ier_etbi;
+wire  ier_erbi;
 wire  [1: 0] ier_fifoened;
 wire  [2:  0]  ier_intid;
 wire  ier_ipend;
@@ -136,60 +136,59 @@ uart_reg #( .APB_DATA_WIDTH(APB_DATA_WIDTH), .APB_ADDR_WIDTH(APB_ADDR_WIDTH),
     .apb_write_in(apb_write_in),
 
     /*-------UART register---------*/
-    input   [7: 0]  rbr_in,
-    output  [7: 0]  thr_out,
+    .rbr_in(dr_rbr),
+    .thr_out(dr_thr),
 
-    output  reg  edssi_out,
-    output  reg  elsi_out,
-    output  reg  etbei_out,
-    output  reg  erbi_out,
-    input  fifoed_in,
-    input  [2: 0]  intid_in,
-    input  ipend_in,
+    .edssi_out(ier_edssi),
+    .elsi_out(ier_elsi),
+    .etbei_out(ier_etbei),
+    .erbi_out(ier_erbi),
+    .fifoed_in(ier_fifoened),
+    .intid_in(ier_intid),
+    .ipend_in(ier_ipend),
 
-    output  reg  [1:0]  rxfiftl_out,
-    output  reg  dmamode1_out,
-    output  reg  rxclr_out,
-    output  reg  txclr_out,
-    output  reg  fifoen_out,
-    output  reg  bc_out,
-    output  reg  sp_out,
-    output  reg  eps_out,
-    output  reg  pen_out,
-    output  reg  stb_out,
-    output  reg  wls_out,
+    .rxfiftl_out(flcr_rxfifotl),
+    .dmamode1_out(flcr_dmamode1),
+    .rxclr_out(flcr_rxclr),
+    .txclr_out(flcr_txclr),
+    .fifoen_out(flcr_fifoen),
+    .bc_out(flcr_bc),
+    .sp_out(flcr_sp),
+    .eps_out(flcr_eps),
+    .pen_out(flcr_pen),
+    .stb_out(flcr_stb),
+    .wls_out(flcr_wls),
 
-    output  reg  afe_out,
-    output  reg  loop_out,
-    output  reg  out2_out,
-    output  reg  out1_out,
-    output  reg  rts_out,
+    .afe_out(mcr_afe),
+    .loop_out(mcr_loop),
+    .out2_out(mcr_out2),
+    .out1_out(mcr_out1),
+    .rts_out(mcr_rts),
 
-    input  rxfifoe_in,
-    input  temt_in,
-    input  thre_in,
-    input  bi_in,
-    input  fe_in,
-    input  pe_in,
-    input  oe_in,
-    input  dr_in,
-    input  cd_in,
-    input  ri_in,
-    input  sr_in,
-    input  dsr_in,
-    input  cts_in,
-    input  dcd_in,
-    input  teri_in,
-    input  ddsr_in,
-    input  dcts_in,  
+    .rxfifoe_in(lmsr_rxfifoe),
+    .temt_in(lmsr_temt),
+    .thre_in(lmsr_thre),
+    .bi_in(lmsr_bi),
+    .fe_in(lmsr_fe),
+    .pe_in(lmsr_pe),
+    .oe_in(lmsr_oe),
+    .dr_in(lmsr_dr),
+    .cd_in(lmsr_cd),
+    .ri_in(lmsr_ri),
+    .dsr_in(lmsr_dsr),
+    .cts_in(lmsr_cts),
+    .dcd_in(lmsr_dcd),
+    .teri_in(lmsr_teri),
+    .ddsr_in(lmsr_ddsr),
+    .dcts_in(lmsr_dcts),  
 
-    output  reg  [15: 0]  dlr_out,
+    .dlr_out(dlr),
 
-    output  reg  utrst_out,
-    output  reg  urrst_out,
-    output  reg  free_out,
+    .utrst_out(mgmt_utrst),
+    .urrst_out(mgmt_urrst),
+    .free_out(mgmt_free),
 
-    output  reg  osm_out
+    .osm_out(mcr_osm_sel)
 
 );
 
