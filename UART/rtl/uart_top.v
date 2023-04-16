@@ -51,11 +51,56 @@ wire  bclk_gen;
 
 
 
-
-
-
-
+/*--------uart regs----------*/
+wire [7: 0] dr_rbr;
+wire [7: 0] dr_thr;
+wire  ier_edssi;
+wire  ier_elsi;
+wire  ier_etbei;
+wire  ier_etbi;
+wire  [1: 0] ier_fifoened;
+wire  [2:  0]  ier_intid;
+wire  ier_ipend;
+wire  [1: 0] flcr_rxfifotl;
+wire  flcr_dmamode1;
+wire  flcr_txclr;
+wire  flcr_rxclr;
+wire  flcr_fifoen;
+wire  flcr_dlab;
+wire  flcr_bc;
+wire  flcr_sp;
+wire  flcr_eps;
+wire  flcr_pen;
+wire  flcr_stb;
+wire  flcr_wls;
+wire  mcr_afe;
+wire  mcr_loop;
+wire  mcr_out2;
+wire  mcr_out1;
+wire  mcr_rts;
+wire  lmsr_rxfifoe;
+wire  lmsr_temt;
+wire  lmsr_thre;
+wire  lmsr_bi;
+wire  lmsr_fe;
+wire  lmsr_pe;
+wire  lmsr_oe;
+wire  lmsr_dr;
+wire  lmsr_cd;
+wire  lmsr_ri;
+wire  lmsr_dsr;
+wire  lmsr_cts;
+wire  lmsr_dcd;
+wire  lmsr_teri;
+wire  lmsr_ddsr;
+wire  lmsr_dcts;
 wire  [15:0]  dlr;
+wire  [31: 0]  revid1;
+wire  [7: 0]  revid2;
+wire  mgmt_utrst;
+wire  mgmt_urrst;
+wire  mgmt_free;
+wire  mcr_osm_sel;
 
 
 sck_generator  bclk_generator(
