@@ -10,10 +10,10 @@
 *
 * Version:         0.1
 *****************************************************************************************/
-module   uart_top #(     parameter   APB_DATA_WIDTH    =  32,
+module   uart_top #(    parameter   APB_DATA_WIDTH    =  32,
                         parameter   APB_ADDR_WIDTH    =  32,
                         parameter   TIMEOUT_CYCLE     =  6,
-                        parameter   UART_REG_BASE      =  32'ha0300000 )
+                        parameter   UART_REG_BASE     =  32'ha0300000 )
 (
 
                 /*--------spi module top signal-------*/
