@@ -30,8 +30,8 @@ module   uart_top #(    parameter   APB_DATA_WIDTH    =  32,
                 input   [APB_ADDR_WIDTH -1: 0]  apb_addr_in,
                 input   apb_penable_in,
                 input   apb_psel_in,
-                output  reg  [APB_DATA_WIDTH-1:0]  apb_rdata_out,
-                output  reg  apb_ready_out,
+                output  [APB_DATA_WIDTH-1:0]  apb_rdata_out,
+                output  apb_ready_out,
 
                 `ifdef  APB_WSTRB
                     input   [(APB_DATA_WIDTH / 8) -1:0]  apb_strb_in,
@@ -74,11 +74,11 @@ uart_reg #( .APB_DATA_WIDTH(APB_DATA_WIDTH), .APB_ADDR_WIDTH(APB_ADDR_WIDTH),
 
 
     /*-----------apb bus signal------------*/
-    input   [APB_ADDR_WIDTH -1: 0]  apb_addr_in,
-    input   apb_penable_in,
-    input   apb_psel_in,
-    output  reg  [APB_DATA_WIDTH-1:0]  apb_rdata_out,
-    output  reg  apb_ready_out,
+    .apb_addr_in(apb_addr_in),
+    .apb_penable_in(apb_penable_in),
+    .apb_psel_in(apb_psel_in),
+    .apb_rdata_out(apb_rdata_out),
+    .apb_ready_out(apb_ready_out),
 
     `ifdef  APB_WSTRB
         input   [(APB_DATA_WIDTH / 8) -1:0]  apb_strb_in,
