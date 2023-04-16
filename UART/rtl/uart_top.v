@@ -46,11 +46,6 @@ module   uart_top #(    parameter   APB_DATA_WIDTH    =  32,
 
 
 
-
-reg  sck_enable;
-
-
-
 wire  bclk_gen;
 
 
@@ -65,7 +60,6 @@ wire  [15:0]  dlr;
 
 sck_generator  bclk_generator(
     .clk_in(apb_clk_in),
-    .enable_in(sck_enable),
     .rstn_in(apb_rstn_in),
     .bclk_out(bclk_gen),
     .divisor(dlr)
