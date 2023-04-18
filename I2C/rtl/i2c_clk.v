@@ -14,8 +14,8 @@ module  i2c_generator(
     input   clk_in,
     input   rstn_in,
     output  reg  sck_out,
-    input   [2: 0]  sppr_in,
-    input   [2: 0]  spr_in
+    input   [5: 0]  dividor_in,
+    input   [9: 0]  ccr_in
 );
 
 
@@ -24,7 +24,7 @@ wire  change_clk;
 reg   [11: 0]  counter;  
 
 /*----get half counter----*/
-always @(clk_in or rstn_in) begin
+always @(posedge  clk_in or  negedge rstn_in) begin
     if (!rstn_in ) begin
         counter       <=    0;
         sck_out       <=    0;
